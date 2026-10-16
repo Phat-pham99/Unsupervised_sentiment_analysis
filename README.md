@@ -1,85 +1,54 @@
-# Unsupervised Sentiment Analysis for Vietnamese
+# Can Unsupervised Clustering Recover Sentiment from Vietnamese Text?
 
-Unsupervised sentiment analysis of Vietnamese customer reviews using **Word2Vec**, **Sentence2Vec**, **PCA**, and **K-means clustering**. The pipeline learns sentiment polarity directly from unlabeled text — no annotated training data required.
+An exploratory study of whether unsupervised text representations and clustering can recover sentiment-related structure in Vietnamese customer reviews. The notebook groups reviews by vector similarity; it does not establish that those groups represent positive, neutral, or negative sentiment.
 
-![clustering-result](https://user-images.githubusercontent.com/57822898/161768865-f77def6c-8154-4b53-a1a7-fded5576c5fa.png)
+## Contents
 
-> Visualization of the K-means result (3 clusters) projected onto 2 dimensions via PCA. Red: Negative, Green: Neutral, Blue: Positive.
-
-## Table of Contents
-- [Overview](#overview)
-- [Pipeline](#pipeline)
-- [Approach](#approach)
+- [Research Question](#research-question)
+- [Current Notebook](#current-notebook)
+- [Data](#data)
+- [Interpretation and Limitations](#interpretation-and-limitations)
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Usage](#usage)
-- [Configuration](#configuration)
-- [Results](#results)
 - [Project Structure](#project-structure)
 - [Future Work](#future-work)
 - [License](#license)
 
-## Overview
+## Research Question
 
-This project performs **sentiment analysis for Vietnamese** without relying on labeled data or an external sentiment lexicon. Instead, it:
+> Can unsupervised text representations and clustering recover sentiment-related structure without using sentiment labels during fitting?
 
-1. Learns Vietnamese word embeddings from raw product reviews using **Word2Vec**.
-2. Represents each review (sentence) as a fixed-length vector by averaging its word vectors — a **Sentence2Vec** approach.
-3. Reduces the dimensionality of the sentence vectors with **PCA**.
-4. Groups the sentences into sentiment categories using **K-means clustering** with cosine distance.
+Clustering optimizes similarity in a representation space, not sentiment. A cluster can instead reflect topic, vocabulary, writing style, text length, or other properties. Cluster separation is therefore not evidence by itself that sentiment has been recovered.
 
-The result is a fully unsupervised classification of reviews into **Negative**, **Neutral**, and **Positive** sentiment.
+## Current Notebook
 
-## Pipeline
+The notebook is an initial prototype. Its current workflow trains Word2Vec embeddings on review text, constructs review vectors, applies PCA, and clusters the vectors with K-means using cosine distance. It sets the number of clusters to three, but this is a modelling choice, not evidence that the data contains three sentiment classes.
 
-```text
-Raw Vietnamese reviews
-        │
-        ▼
- Word2Vec (word embeddings)
-        │
-        ▼
- Sentence2Vec (mean of word vectors)
-        │
-        ▼
- PCA (dimensionality reduction)
-        │
-        ▼
- K-means clustering (cosine distance)
-        │
-        ▼
- Sentiment labels: Negative / Neutral / Positive
-```
+The notebook also projects vectors to two dimensions for visualization. The plotted coordinates are only a projection and cannot validate cluster meaning. Cluster IDs are arbitrary and must not be called negative, neutral, or positive without independent evaluation.
 
-## Approach
+The current implementation and its outputs have not yet been validated. In particular, preprocessing and review-vector construction should be checked before interpreting any clusters.
 
-### Word2Vec
-A Word2Vec model (skip-gram style, applied with the Gensim library) is trained on tokenized Vietnamese reviews. It captures semantic relationships between words, e.g. the nearest neighbors of *tốt* ("good") include *rất_đẹp*, *rất_ưng*, *rất_thích*, *rất_tốt* — all strongly positive words, confirming that sentiment is encoded in the learned embeddings.
+## Data
 
-| Attribute   | Value  |
-|-------------|--------|
-| Vector size | 400    |
-| Window      | 10     |
-| Epochs      | 35     |
-| Min count   | 5      |
-| Seed        | 567    |
+The notebook expects an external Excel file with `comment` and `comment_1` columns. The data is not included in this repository, and its source, licence, sample count, and label availability are not documented here. Those details must be established before the experiment can be reproduced or evaluated.
 
-### Sentence2Vec
-Each review is tokenized with the `underthesea` tokenizer, its word vectors are fetched from the Word2Vec model, and the sentence vector is computed as the **mean of the (summed) word vectors**, normalized by the vector size. A cosine-similarity method is provided to compare sentences.
+If sentiment labels are available, they should be kept out of representation learning and clustering and used only for clearly identified post-hoc evaluation. If labels are unavailable, a manually annotated validation subset would need a documented sampling and annotation procedure.
 
-### PCA
-The high-dimensional (400-D) sentence vectors are projected down to 80 dimensions with PCA to improve clustering efficiency and reduce noise.
+## Interpretation and Limitations
 
-### K-means Clustering
-K-means clustering is applied with **cosine distance**, normalization enabled, repeated across 20 attempts, with empty clusters disallowed. `NUM_CLUSTERS = 3` maps directly onto the three sentiment classes.
+- The notebook does not currently use sentiment labels or measure cluster agreement with sentiment.
+- Internal clustering metrics and plots can describe geometric structure, but cannot establish sentiment validity.
+- Topic, vocabulary, writing style, and other signals may dominate polarity.
+- Results are not reproducible from this repository alone because the input data is absent and its provenance is unspecified.
+
+This repository is an exploratory prototype, not a validated sentiment classifier. Any sentiment interpretation should be treated as a hypothesis until supported by independent evidence.
 
 ## Getting Started
 
 ### Prerequisites
-- Python 3.7+
-- [Jupyter Notebook](https://jupyter.org/)
-- An Excel file of Vietnamese product reviews with a `comment` column (and a `comment_1` normalized column), loaded as `data`.
+
+- A Python environment with the packages listed in `requirement.txt` (the notebook may require additional packages for data loading).
+- [Jupyter Notebook](https://jupyter.org/).
+- An Excel file of Vietnamese product reviews with `comment` and `comment_1` columns. The data file is not included.
 
 ### Installation
 
@@ -89,53 +58,34 @@ pip install -r requirement.txt
 
 ### Usage
 
-Open and run the notebook cell-by-cell:
+Make the expected Excel data file available at the path used by the notebook, then open and run the notebook cell-by-cell:
 
 ```bash
 jupyter notebook Unsupervised_sentiment_analysis.ipynb
 ```
 
-The notebook walks through the full pipeline: importing the data, training Word2Vec, building sentence vectors, reducing dimensions with PCA, clustering with K-means, and finally plotting the results with the sentiment labels.
+The notebook imports the reviews, trains Word2Vec, builds review vectors, reduces dimensions with PCA, clusters with K-means, and plots the resulting cluster assignments. The plot does not provide sentiment labels or validate sentiment.
 
-> **Note:** The `w2v.model` artifact is produced by training and then re-loaded via the `Sentence2Vec` class.
-
-## Configuration
-
-Key hyperparameters are defined at the top of the notebook:
-
-| Constant        | Value | Description                                        |
-|-----------------|-------|----------------------------------------------------|
-| `W2V_SIZE`      | 400   | Word vector dimensionality                         |
-| `W2V_WINDOW`    | 10    | Maximum distance between current and predicted word |
-| `W2V_EPOCH`     | 35    | Number of training epochs                          |
-| `W2V_MIN_COUNT` | 5     | Ignores tokens with frequency lower than this       |
-| `SEED`          | 567   | Random seed for reproducibility                    |
-| `NUM_CLUSTERS`  | 3     | Number of sentiment clusters                       |
-| `iteration`     | 20    | K-means repeated restarts                          |
-
-## Results
-
-After clustering, each review is assigned a label (0, 1, or 2):
-- **Label 0** — Negative (e.g., *"vải thô, không mềm, bị bạc"*)
-- **Label 1** — Neutral (e.g., *"Size không chính xác, áo quá nóng"*)
-- **Label 2** — Positive (e.g., *"Vải dày mịn áo y hình rất đẹp"*)
-
-The final scatter plot (projected to 2D) visually separates the three sentiment groups, demonstrating that unsupervised clustering recovers sentiment structure from raw Vietnamese text.
+The Word2Vec and K-means parameters, including `W2V_SIZE`, `W2V_WINDOW`, `W2V_EPOCH`, `W2V_MIN_COUNT`, `SEED`, `NUM_CLUSTERS`, and `iteration`, are defined directly in the notebook. These are prototype settings, not validated or optimized values.
 
 ## Project Structure
 
 ```text
 .
-├── Unsupervised_sentiment_analysis.ipynb   # Main notebook with the full pipeline
+├── Unsupervised_sentiment_analysis.ipynb   # Exploratory notebook
 ├── requirement.txt                         # Python dependencies
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ## Future Work
 
-- Tune the number of clusters (e.g., via the silhouette score / elbow method).
-- Experiment with other embedding approaches (e.g., FastText, BERT embeddings).
-- Validate cluster quality against a small labeled subset.
+- Document the dataset source, licence, preprocessing, and label availability.
+- Audit and correct the existing vectorization workflow before interpreting results.
+- Evaluate cluster stability across repeated runs and modelling choices.
+- Compare clusters with held-out sentiment labels, if available, or a manually annotated subset.
+- Inspect representative and contradictory reviews to assess topic-sentiment entanglement.
+- Compare a small number of motivated text representations and clustering methods.
 
 ## License
 

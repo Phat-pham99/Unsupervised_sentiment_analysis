@@ -73,6 +73,83 @@ The high-dimensional (400-D) sentence vectors are projected down to 80 dimension
 
 ### K-means Clustering
 K-means clustering is applied with **cosine distance**, normalization enabled, repeated across 20 attempts, with empty clusters disallowed. `NUM_CLUSTERS = 3` maps directly onto the three sentiment classes.
+## Research Question
+
+> Can unsupervised text representations and clustering recover sentiment-related structure without using sentiment labels during fitting?
+
+Clustering optimizes similarity in a representation space, not sentiment. A cluster can instead reflect topic, vocabulary, writing style, text length, or other properties. Cluster separation is therefore not evidence by itself that sentiment has been recovered.
+
+## Workflow
+
+```mermaid
+flowchart TD
+    A[Raw Vietnamese Reviews<br/><code>comment</code>, <code>comment_1</code>] --> B[Tokenization & Corpus Preprocessing<br/><code>underthesea</code> / whitespace split]
+    B --> C[Word2Vec Embedding Learning<br/>Continuous word vectors, 400-D]
+    C --> D[Review Vectorization<br/>Mean word pooling across matched tokens]
+    D --> E[Dimensionality Reduction<br/>PCA: 400-D → 80-D, fixed seed]
+    E --> F[Cosine K-Means Clustering<br/>k=3 clusters, 20 restarts]
+
+    F --> G[Internal Geometric Evaluation<br/>Cluster balance & Silhouette score]
+    D --> H[2D Visualization<br/>PCA projection strictly for inspection]
+    F --> I[Qualitative Review Inspection<br/>Examine samples per cluster ID]
+
+    subgraph Evaluation [ Semantic Validation vs Geometric Separation ]
+        G
+        H
+        I
+    end
+
+    I -.-> J[Critical Assessment<br/>Check topic vs sentiment dominance]
+```
+
+## Current Notebook
+
+The notebook is an initial prototype. Its current workflow trains Word2Vec embeddings on review text, constructs review vectors, applies PCA, and clusters the vectors with K-means using cosine distance. It sets the number of clusters to three, but this is a modelling choice, not evidence that the data contains three sentiment classes.
+
+The notebook also projects vectors to two dimensions for visualization. The plotted coordinates are only a projection and cannot validate cluster meaning. Cluster IDs are arbitrary and must not be called negative, neutral, or positive without independent evaluation.
+
+The current implementation and its outputs have not yet been validated. In particular, preprocessing and review-vector construction should be checked before interpreting any clusters.
+
+## Data
+
+The dataset is stored in [`data.xlsx`](data.xlsx) and is included directly in this repository.
+
+| Property | Detail |
+|---|---|
+| File | `data.xlsx` |
+| Samples | 23,927 reviews |
+| Language | Vietnamese |
+
+### Columns
+
+| Column | Type | Description |
+|---|---|---|
+| `comment` | text | Review content |
+| `Sentiment` | label | Sentiment label: `positive`, `negative`, `neutral` (note: one row contains a typo `negatvie`) |
+| `phan_loai` | label | Product/service category: `thoi_trang` (fashion), `shop`, `khac` (other), `chung` (general), `cong_nghe` (technology), `bach_hoa` (grocery), `gia_dung` (household), `my_pham` (cosmetics), `giai_tri` (entertainment), and others |
+| `Quality` | binary | Whether the review mentions quality (1) or not (0) |
+| `Price` | binary | Whether the review mentions price (1) or not (0) |
+
+### Sentiment distribution
+
+| Label | Count |
+|---|---|
+| positive | 14,571 |
+| negative | 5,992 |
+| neutral | 3,363 |
+
+### Usage note
+
+Sentiment labels were not used during representation learning or clustering. They are retained for post-hoc evaluation of whether the discovered clusters align with sentiment polarity. The `phan_loai`, `Quality`, and `Price` columns are likewise available for post-hoc analysis of topic-sentiment entanglement.
+
+## Interpretation and Limitations
+
+- The notebook does not currently use sentiment labels or measure cluster agreement with sentiment.
+- Internal clustering metrics and plots can describe geometric structure, but cannot establish sentiment validity.
+- Topic, vocabulary, writing style, and other signals may dominate polarity.
+- Ground-truth labels (`Sentiment`, `phan_loai`, `Quality`, `Price`) are available in the dataset but were withheld from representation learning and clustering; they can be used for post-hoc evaluation only.
+
+This repository is an exploratory prototype, not a validated sentiment classifier. Any sentiment interpretation should be treated as a hypothesis until supported by independent evidence.
 
 ## Getting Started
 
@@ -80,6 +157,9 @@ K-means clustering is applied with **cosine distance**, normalization enabled, r
 - Python 3.7+
 - [Jupyter Notebook](https://jupyter.org/)
 - An Excel file of Vietnamese product reviews with a `comment` column (and a `comment_1` normalized column), loaded as `data`.
+
+- A Python environment with the packages listed in `requirement.txt` (the notebook may require additional packages for data loading, e.g., `openpyxl` for reading `.xlsx` files).
+- [Jupyter Notebook](https://jupyter.org/).
 
 ### Installation
 
@@ -90,6 +170,7 @@ pip install -r requirement.txt
 ### Usage
 
 Open and run the notebook cell-by-cell:
+The dataset `data.xlsx` is already present in the repository. Open and run the notebook cell-by-cell:
 
 ```bash
 jupyter notebook Unsupervised_sentiment_analysis.ipynb
@@ -126,16 +207,20 @@ The final scatter plot (projected to 2D) visually separates the three sentiment 
 
 ```text
 .
-├── Unsupervised_sentiment_analysis.ipynb   # Main notebook with the full pipeline
+├── Unsupervised_sentiment_analysis.ipynb   # Exploratory notebook with baseline workflow
+├── data.xlsx                               # Vietnamese review dataset (23,927 samples)
 ├── requirement.txt                         # Python dependencies
 └── README.md
 ```
 
 ## Future Work
 
-- Tune the number of clusters (e.g., via the silhouette score / elbow method).
-- Experiment with other embedding approaches (e.g., FastText, BERT embeddings).
-- Validate cluster quality against a small labeled subset.
+- Document the dataset source, licence, and preprocessing steps in detail.
+- Audit and correct the existing vectorization workflow before interpreting results.
+- Evaluate cluster stability across repeated runs and modelling choices.
+- Compare clusters with held-out sentiment labels, if available, or a manually annotated subset.
+- Inspect representative and contradictory reviews to assess topic-sentiment entanglement.
+- Compare a small number of motivated text representations and clustering methods.
 
 ## License
 

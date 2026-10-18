@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data artifacts
+w2v.model
+*.npy
+
+# OS
+.DS_Store
+Thumbs.db

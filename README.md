@@ -8,10 +8,10 @@ An exploratory study of Vietnamese customer reviews using **Word2Vec**, **Senten
 
 ## Why This Project Was Born
 
-This project was made during my internship at Stech VN, an AI startup company. My responsibility was to support the development of a Machine Learning Autonomous Market Research Pipeline using sentiment analysis. One of the main tasks assigned to me was to label product review comments on e-commerce platforms, as the first step of the machine learning pipeline. I immediately saw two problems with this manual labeling approach:
+This project was made during my internship at **Stech VN**, an AI startup company. My responsibility was to support the development of a **Machine Learning Autonomous Market Research Pipeline using Sentiment Analysis**. One of the main tasks assigned to me was to label product review comments on e-commerce platforms, as the first step of the machine learning pipeline. I immediately saw two problems with this manual labeling approach:
 
-1) It was very time-consuming and inefficient. We estimated that we would need approximately 300,000 labeled data points to train an acceptable supervised model, which would take months of labeling and cross-checking.
-2) Human annotators disagree, and their labels carry that noise and bias. Having multiple annotators label each review to measure and reduce that disagreement would roughly double the work and time required.
+1) It was very **time-consuming** and **inefficient**. We estimated that we would need approximately **300,000 labeled data points** to train an acceptable supervised model, which would take months of labeling and cross-checking.
+2) Human annotators disagree, and their labels carry that **noise and bias**. Having multiple annotators label each review to measure and reduce that disagreement would roughly double the work and time required.
 
 Labeled sentiment data is expensive to produce, and far less of it exists for Vietnamese than for English. Customer reviews, on the other hand, are plentiful and cheap to collect. This project started from a simple question: could the structure of those reviews alone reveal how customers feel, without anyone annotating them first?
 

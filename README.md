@@ -6,9 +6,23 @@ Unsupervised sentiment analysis of Vietnamese customer reviews using **Word2Vec*
 
 > Visualization of the K-means result (3 clusters) projected onto 2 dimensions via PCA. Red: Negative, Green: Neutral, Blue: Positive.
 
+
+
+## Why This Project Was Born
+
+Labelled sentiment data is expensive to produce, and far less of it exists for Vietnamese than for English. Customer reviews, on the other hand, are plentiful and unlabelled. This project started from a simple question: could the structure of those reviews alone reveal how customers feel, without anyone annotating them first?
+
+The first version assumed the answer was yes. It trained word embeddings on Vietnamese product reviews, clustered the review vectors into three groups, and named them Negative, Neutral, and Positive. On review, that framing proved too strong. Clustering groups reviews by similarity, which can reflect product type, vocabulary, or review length just as easily as sentiment, and nothing in the original pipeline checked which of these it had found.
+
+The project now treats that gap as its research question. Instead of claiming an unsupervised sentiment classifier, it examines when sentiment-related structure emerges, when other signals dominate, and what evidence is needed before a cluster can be called a sentiment.
+
+
+
 ## Table of Contents
+
+- [Why This Project Was Born](#why-this-project-was-born)
 - [Overview](#overview)
-- [Pipeline](#pipeline)
+- [Workflow](#workflow)
 - [Approach](#approach)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -31,48 +45,32 @@ This project performs **sentiment analysis for Vietnamese** without relying on l
 
 The result is a fully unsupervised classification of reviews into **Negative**, **Neutral**, and **Positive** sentiment.
 
-## Pipeline
-
-```text
-Raw Vietnamese reviews
-        │
-        ▼
- Word2Vec (word embeddings)
-        │
-        ▼
- Sentence2Vec (mean of word vectors)
-        │
-        ▼
- PCA (dimensionality reduction)
-        │
-        ▼
- K-means clustering (cosine distance)
-        │
-        ▼
- Sentiment labels: Negative / Neutral / Positive
-```
-
 ## Approach
 
 ### Word2Vec
+
 A Word2Vec model (skip-gram style, applied with the Gensim library) is trained on tokenized Vietnamese reviews. It captures semantic relationships between words, e.g. the nearest neighbors of *tốt* ("good") include *rất_đẹp*, *rất_ưng*, *rất_thích*, *rất_tốt* — all strongly positive words, confirming that sentiment is encoded in the learned embeddings.
 
-| Attribute   | Value  |
-|-------------|--------|
-| Vector size | 400    |
-| Window      | 10     |
-| Epochs      | 35     |
-| Min count   | 5      |
-| Seed        | 567    |
+| Attribute   | Value |
+| ----------- | ----- |
+| Vector size | 400   |
+| Window      | 10    |
+| Epochs      | 35    |
+| Min count   | 5     |
+| Seed        | 567   |
 
 ### Sentence2Vec
+
 Each review is tokenized with the `underthesea` tokenizer, its word vectors are fetched from the Word2Vec model, and the sentence vector is computed as the **mean of the (summed) word vectors**, normalized by the vector size. A cosine-similarity method is provided to compare sentences.
 
 ### PCA
+
 The high-dimensional (400-D) sentence vectors are projected down to 80 dimensions with PCA to improve clustering efficiency and reduce noise.
 
 ### K-means Clustering
+
 K-means clustering is applied with **cosine distance**, normalization enabled, repeated across 20 attempts, with empty clusters disallowed. `NUM_CLUSTERS = 3` maps directly onto the three sentiment classes.
+
 ## Research Question
 
 > Can unsupervised text representations and clustering recover sentiment-related structure without using sentiment labels during fitting?
@@ -114,29 +112,29 @@ The current implementation and its outputs have not yet been validated. In parti
 
 The dataset is stored in [`data.xlsx`](data.xlsx) and is included directly in this repository.
 
-| Property | Detail |
-|---|---|
-| File | `data.xlsx` |
-| Samples | 23,927 reviews |
-| Language | Vietnamese |
+| Property | Detail         |
+| -------- | -------------- |
+| File     | `data.xlsx`  |
+| Samples  | 23,927 reviews |
+| Language | Vietnamese     |
 
 ### Columns
 
-| Column | Type | Description |
-|---|---|---|
-| `comment` | text | Review content |
-| `Sentiment` | label | Sentiment label: `positive`, `negative`, `neutral` (note: one row contains a typo `negatvie`) |
-| `phan_loai` | label | Product/service category: `thoi_trang` (fashion), `shop`, `khac` (other), `chung` (general), `cong_nghe` (technology), `bach_hoa` (grocery), `gia_dung` (household), `my_pham` (cosmetics), `giai_tri` (entertainment), and others |
-| `Quality` | binary | Whether the review mentions quality (1) or not (0) |
-| `Price` | binary | Whether the review mentions price (1) or not (0) |
+| Column        | Type   | Description                                                                                                                                                                                                                                          |
+| ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`   | text   | Review content                                                                                                                                                                                                                                       |
+| `Sentiment` | label  | Sentiment label: `positive`, `negative`, `neutral` (note: one row contains a typo `negatvie`)                                                                                                                                                |
+| `phan_loai` | label  | Product/service category: `thoi_trang` (fashion), `shop`, `khac` (other), `chung` (general), `cong_nghe` (technology), `bach_hoa` (grocery), `gia_dung` (household), `my_pham` (cosmetics), `giai_tri` (entertainment), and others |
+| `Quality`   | binary | Whether the review mentions quality (1) or not (0)                                                                                                                                                                                                   |
+| `Price`     | binary | Whether the review mentions price (1) or not (0)                                                                                                                                                                                                     |
 
 ### Sentiment distribution
 
-| Label | Count |
-|---|---|
+| Label    | Count  |
+| -------- | ------ |
 | positive | 14,571 |
-| negative | 5,992 |
-| neutral | 3,363 |
+| negative | 5,992  |
+| neutral  | 3,363  |
 
 ### Usage note
 
@@ -154,10 +152,10 @@ This repository is an exploratory prototype, not a validated sentiment classifie
 ## Getting Started
 
 ### Prerequisites
+
 - Python 3.7+
 - [Jupyter Notebook](https://jupyter.org/)
 - An Excel file of Vietnamese product reviews with a `comment` column (and a `comment_1` normalized column), loaded as `data`.
-
 - A Python environment with the packages listed in `requirement.txt` (the notebook may require additional packages for data loading, e.g., `openpyxl` for reading `.xlsx` files).
 - [Jupyter Notebook](https://jupyter.org/).
 
@@ -184,19 +182,20 @@ The notebook walks through the full pipeline: importing the data, training Word2
 
 Key hyperparameters are defined at the top of the notebook:
 
-| Constant        | Value | Description                                        |
-|-----------------|-------|----------------------------------------------------|
-| `W2V_SIZE`      | 400   | Word vector dimensionality                         |
+| Constant          | Value | Description                                         |
+| ----------------- | ----- | --------------------------------------------------- |
+| `W2V_SIZE`      | 400   | Word vector dimensionality                          |
 | `W2V_WINDOW`    | 10    | Maximum distance between current and predicted word |
-| `W2V_EPOCH`     | 35    | Number of training epochs                          |
+| `W2V_EPOCH`     | 35    | Number of training epochs                           |
 | `W2V_MIN_COUNT` | 5     | Ignores tokens with frequency lower than this       |
-| `SEED`          | 567   | Random seed for reproducibility                    |
-| `NUM_CLUSTERS`  | 3     | Number of sentiment clusters                       |
-| `iteration`     | 20    | K-means repeated restarts                          |
+| `SEED`          | 567   | Random seed for reproducibility                     |
+| `NUM_CLUSTERS`  | 3     | Number of sentiment clusters                        |
+| `iteration`     | 20    | K-means repeated restarts                           |
 
 ## Results
 
 After clustering, each review is assigned a label (0, 1, or 2):
+
 - **Label 0** — Negative (e.g., *"vải thô, không mềm, bị bạc"*)
 - **Label 1** — Neutral (e.g., *"Size không chính xác, áo quá nóng"*)
 - **Label 2** — Positive (e.g., *"Vải dày mịn áo y hình rất đẹp"*)
